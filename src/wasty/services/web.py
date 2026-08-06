@@ -86,11 +86,17 @@ class WebService(Service):
         @app.get("/api/capabilities")
         async def api_capabilities() -> dict[str, Any]:
             mtx = self.ctx.config.mediamtx
+            drive = self.ctx.config.drive
             return {
                 "panels": self.ctx.registry.ui_panels(),
                 "stream": {
                     "name": mtx.stream_name,
                     "webrtc_port": mtx.webrtc_port,
+                },
+                "drive": {
+                    "held_throttle": drive.held_throttle,
+                    "max_throttle": drive.max_throttle,
+                    "step_increment": drive.step_increment,
                 },
             }
 

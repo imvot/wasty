@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import type { DriveState } from "../api/types";
 import { ws } from "../api/ws";
 
-export default function EStop() {
+interface Props {
+  compact?: boolean;
+}
+
+export default function EStop({ compact = false }: Props) {
   const [engaged, setEngaged] = useState(false);
 
   useEffect(
@@ -12,10 +16,11 @@ export default function EStop() {
 
   return (
     <button
-      className={`estop ${engaged ? "engaged" : ""}`}
+      type="button"
+      className={`estop ${engaged ? "engaged" : ""} ${compact ? "compact" : ""}`}
       onClick={() => ws.send("estop", { engaged: !engaged })}
     >
-      {engaged ? "RELEASE E-STOP" : "E-STOP"}
+      {engaged ? "RELEASE" : "E-STOP"}
     </button>
   );
 }

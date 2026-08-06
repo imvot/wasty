@@ -61,7 +61,9 @@ class DriveConfig(BaseModel):
     steering_center: float = 105.0
     steering_left: float = 145.0
     steering_right: float = 70.0
-    max_throttle: float = 0.6
+    max_throttle: float = 1.0
+    held_throttle: float = 0.6
+    step_increment: float = 0.2
     throttle_ramp: float = 2.0
     manual_timeout: float = 0.5
     autonomy_timeout: float = 1.0

@@ -45,7 +45,9 @@ drive:
   steering_center: 105.0   # servo degrees
   steering_left: 145.0     # full-left servo angle (steer = -1)
   steering_right: 70.0     # full-right servo angle (steer = +1)
-  max_throttle: 0.6
+  max_throttle: 1.0        # hard ceiling; UI held-mode uses 0.6, boost uses 1.0
+  held_throttle: 0.6       # documented default for the livefeed held mode
+  step_increment: 0.2
   throttle_ramp: 2.0       # max throttle change per second
   manual_timeout: 0.5      # s without a manual command before neutral (deadman)
   autonomy_timeout: 1.0    # s without an autonomy command before neutral

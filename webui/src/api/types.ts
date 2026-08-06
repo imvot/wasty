@@ -1,6 +1,11 @@
 export interface Capabilities {
   panels: string[];
   stream: { name: string; webrtc_port: number };
+  drive: {
+    held_throttle: number;
+    max_throttle: number;
+    step_increment: number;
+  };
 }
 
 export interface DriveState {
@@ -37,3 +42,5 @@ export type ServerMessage =
   | { type: "drive.state"; payload: DriveState }
   | { type: "mission.state"; payload: MissionState }
   | { type: "detections"; payload: Detections };
+
+export type PageId = "home" | "livefeed" | "autonomy" | "status";
