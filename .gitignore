@@ -12,3 +12,4 @@ node_modules/
 # Built SPA is committed so the Pi can install without Node.
 # Rebuild with: cd webui && npm install && npm run build
 webui/tsconfig.tsbuildinfo
+.dev-overlay.yaml

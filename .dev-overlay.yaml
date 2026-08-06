@@ -1,4 +1,0 @@
-web:
-  port: 8090
-autonomy:
-  detector: mock-blob
