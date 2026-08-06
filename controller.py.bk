@@ -1,0 +1,80 @@
+#!/bin/python
+
+from adafruit_servokit import ServoKit
+import pygame
+from time import sleep
+
+pygame.init()
+pygame.joystick.init()
+
+kit = ServoKit(channels=16)
+servo = kit.servo[0]
+motor = kit.continuous_servo[1]
+controller = pygame.joystick.Joystick(0)
+controller.init()
+
+servo.set_pulse_width_range(500, 2500)
+motor.throttle = 0.0
+servo.angle = 90
+sleep(2)
+
+class Direction():
+    def __init__(self, n=2):
+        self._list = [1]
+        self._length = n + 1
+    
+    def __getitem__(self, index):
+        return self._list[index]
+        
+    def _short(self):
+        if(len(self._list) > self._length):
+            self._list.pop()
+    
+    def append(self, v):
+        self._list.insert(0, v)
+        self._short()
+
+    def pop(self):
+        del self._list[0]
+
+def deadzone(v, dz=0.1):
+    if abs(v) > dz:
+        return v
+    return 0
+
+def pos(v):
+    if v > 0:
+        return v
+    return 0
+
+print(controller.get_name())
+
+direction = Direction()
+previously_forward = False
+previously_backward = False
+
+while True:
+    pygame.event.pump()
+
+    forward = bool(deadzone(pos(controller.get_axis(5))))
+    backward = bool(deadzone(pos(controller.get_axis(4))))
+
+
+    if(not forward and not backward):
+        direction.append(0)
+
+    if forward:
+        if not previously_forward:
+            direction.append(1)
+    elif direction[0] == 1:
+        direction.pop()
+
+    if backward:
+        if not previously_backward:
+            direction.append(-1)
+    elif direction[0] == -1:
+        direction.pop()
+
+    previously_forward = forward
+    previously_backward = backward
+    motor.throttle = direction[0]
