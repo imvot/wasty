@@ -68,3 +68,12 @@ class MissionState(BaseModel):
     state: str  # "idle" | "search" | "approach" | "collect"
     detail: str = ""
     ts: float = Field(default_factory=now)
+
+
+class RecordingState(BaseModel):
+    recording: bool
+    filename: str | None = None
+    started_at: str | None = None  # ISO local timestamp when recording began
+    path: str | None = None
+    error: str | None = None
+    ts: float = Field(default_factory=now)

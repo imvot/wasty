@@ -6,6 +6,8 @@ __pycache__/
 .lgd-nfy0
 .DS_Store
 config/local.yaml
+data/recordings/*
+!data/recordings/.gitkeep
 node_modules/
 # Built SPA is committed so the Pi can install without Node.
 # Rebuild with: cd webui && npm install && npm run build

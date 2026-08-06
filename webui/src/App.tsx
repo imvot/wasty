@@ -29,6 +29,13 @@ export default function App() {
             max_throttle: 1.0,
             step_increment: 0.2,
           },
+          recording: data.recording ?? {
+            enabled: false,
+            directory: "",
+            width: 1280,
+            height: 720,
+            bitrate: 8_000_000,
+          },
         });
       })
       .catch((e) => setError(String(e)));

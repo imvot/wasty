@@ -96,6 +96,13 @@ MediaMTX, venv recreate). Day-to-day: `git pull && sudo scripts/update.sh`.
 Hardware services (drive/camera) are not live-reloaded in-process — a restart
 is the safe way to pick up changes on a robot.
 
+### Training recordings
+
+Livefeed has a **Record** control. Clips are encoded from the camera's main
+stream (default 1280×720 at a high bitrate), not from the compressed WebRTC
+preview. Files land in `/opt/wasty/recordings/` on the Pi (or `data/recordings/`
+in local mock mode), named `YYYYMMDD_HHMMSS.mp4`.
+
 ## Develop on a laptop (no robot needed)
 
 ```bash

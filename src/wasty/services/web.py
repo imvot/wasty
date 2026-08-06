@@ -4,14 +4,16 @@ WebSocket control/telemetry channel.
 WebSocket protocol — JSON envelopes {"type": ..., "payload": ...}:
 
   client -> server:
-    drive    {throttle: float, steering: float}     (send >= 5 Hz while driving)
-    estop    {engaged: bool}
-    mission  {action: "start" | "stop"}
+    drive      {throttle: float, steering: float}   (send >= 5 Hz while driving)
+    estop      {engaged: bool}
+    mission    {action: "start" | "stop"}
+    recording  {action: "start" | "stop"}
 
   server -> client:
-    drive.state    DriveState
-    mission.state  MissionState
-    detections     Detections
+    drive.state      DriveState
+    mission.state    MissionState
+    detections       Detections
+    recording.state  RecordingState
 """
 
 from __future__ import annotations
@@ -27,6 +29,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from ..core import bus as topics
+from ..core.config import resolve_recording_dir
 from ..core.messages import DriveIntent, DriveSource, EStop, MissionCommand
 from ..core.service import Service
 
@@ -87,6 +90,8 @@ class WebService(Service):
         async def api_capabilities() -> dict[str, Any]:
             mtx = self.ctx.config.mediamtx
             drive = self.ctx.config.drive
+            cam = self.ctx.config.camera
+            rec = self.ctx.config.recording
             return {
                 "panels": self.ctx.registry.ui_panels(),
                 "stream": {
@@ -98,7 +103,33 @@ class WebService(Service):
                     "max_throttle": drive.max_throttle,
                     "step_increment": drive.step_increment,
                 },
+                "recording": {
+                    "enabled": rec.enabled and "recording" in self.ctx.registry.ui_panels(),
+                    "directory": str(resolve_recording_dir(rec.directory)),
+                    "width": cam.width,
+                    "height": cam.height,
+                    "bitrate": rec.bitrate,
+                },
             }
+
+        @app.get("/api/recording")
+        async def api_recording_status() -> dict[str, Any]:
+            camera = self.ctx.registry.get("camera")
+            if camera is None:
+                return {"recording": False, "error": "camera unavailable"}
+            return camera.status()
+
+        @app.post("/api/recording")
+        async def api_recording(payload: dict[str, Any]) -> dict[str, Any]:
+            action = str(payload.get("action", "stop"))
+            camera = self.ctx.registry.get("camera")
+            if camera is None or not hasattr(camera, "start_recording"):
+                return {"ok": False, "error": "camera unavailable"}
+            if action == "start":
+                state = await camera.start_recording()
+            else:
+                state = await camera.stop_recording()
+            return {"ok": state.error is None, **state.model_dump()}
 
         @app.post("/api/estop")
         async def api_estop(payload: dict[str, Any]) -> dict[str, Any]:
@@ -168,8 +199,19 @@ class WebService(Service):
                 topics.MISSION_COMMAND,
                 MissionCommand(action=str(payload.get("action", "stop"))),
             )
+        elif kind == "recording":
+            asyncio.create_task(self._handle_recording(str(payload.get("action", "stop"))))
         else:
             self.log.debug("unknown ws message type: %s", kind)
+
+    async def _handle_recording(self, action: str) -> None:
+        camera = self.ctx.registry.get("camera")
+        if camera is None or not hasattr(camera, "start_recording"):
+            return
+        if action == "start":
+            await camera.start_recording()
+        else:
+            await camera.stop_recording()
 
     async def _broadcast_loop(self) -> None:
         """Forward bus telemetry to every connected WebSocket client."""
@@ -177,6 +219,7 @@ class WebService(Service):
             "drive.state": self.ctx.bus.subscribe(topics.DRIVE_STATE),
             "mission.state": self.ctx.bus.subscribe(topics.MISSION_STATE),
             "detections": self.ctx.bus.subscribe(topics.VISION_DETECTIONS),
+            "recording.state": self.ctx.bus.subscribe(topics.RECORDING_STATE),
         }
 
         async def pump(kind: str, sub) -> None:

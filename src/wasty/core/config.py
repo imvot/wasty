@@ -38,12 +38,19 @@ class MediamtxConfig(BaseModel):
 
 class CameraConfig(BaseModel):
     enabled: bool = True
-    width: int = 854
-    height: int = 480
+    width: int = 1280
+    height: int = 720
     fps: int = 30
-    bitrate: int = 1_000_000
+    bitrate: int = 2_000_000
     lores_width: int = 320
     lores_height: int = 240
+
+
+class RecordingConfig(BaseModel):
+    enabled: bool = True
+    # Empty = auto (/opt/wasty/recordings or ./data/recordings).
+    directory: str = ""
+    bitrate: int = 8_000_000
 
 
 class WebConfig(BaseModel):
@@ -87,9 +94,22 @@ class Config(BaseModel):
     hotspot: HotspotConfig = HotspotConfig()
     mediamtx: MediamtxConfig = MediamtxConfig()
     camera: CameraConfig = CameraConfig()
+    recording: RecordingConfig = RecordingConfig()
     web: WebConfig = WebConfig()
     drive: DriveConfig = DriveConfig()
     autonomy: AutonomyConfig = AutonomyConfig()
+
+
+def resolve_recording_dir(configured: str = "") -> Path:
+    """Directory for YOLO training clips (outside the rsync'd app tree on the Pi)."""
+    if configured:
+        path = Path(configured).expanduser()
+    elif Path("/opt/wasty").is_dir():
+        path = Path("/opt/wasty/recordings")
+    else:
+        path = Path.cwd() / "data" / "recordings"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:

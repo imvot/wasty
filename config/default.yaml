@@ -24,12 +24,18 @@ mediamtx:
 
 camera:
   enabled: true
-  width: 854
-  height: 480
+  width: 1280          # main sensor mode — used for RTSP preview encode AND recordings
+  height: 720
   fps: 30
-  bitrate: 1000000
+  bitrate: 2000000     # live preview bitrate (WebRTC); recordings use recording.bitrate
   lores_width: 320     # low-res tap used by the vision pipeline
   lores_height: 240
+
+recording:
+  enabled: true
+  # Empty = /opt/wasty/recordings on the Pi install, else ./data/recordings
+  directory: ""
+  bitrate: 8000000     # high-bitrate camera encode for YOLO training (not the livefeed)
 
 web:
   enabled: true

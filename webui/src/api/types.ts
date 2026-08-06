@@ -6,6 +6,13 @@ export interface Capabilities {
     max_throttle: number;
     step_increment: number;
   };
+  recording: {
+    enabled: boolean;
+    directory: string;
+    width: number;
+    height: number;
+    bitrate: number;
+  };
 }
 
 export interface DriveState {
@@ -38,9 +45,19 @@ export interface Detections {
   ts: number;
 }
 
+export interface RecordingState {
+  recording: boolean;
+  filename?: string | null;
+  started_at?: string | null;
+  path?: string | null;
+  error?: string | null;
+  ts?: number;
+}
+
 export type ServerMessage =
   | { type: "drive.state"; payload: DriveState }
   | { type: "mission.state"; payload: MissionState }
-  | { type: "detections"; payload: Detections };
+  | { type: "detections"; payload: Detections }
+  | { type: "recording.state"; payload: RecordingState };
 
 export type PageId = "home" | "livefeed" | "autonomy" | "status";

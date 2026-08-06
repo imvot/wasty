@@ -19,6 +19,7 @@ SAFETY_ESTOP = "safety.estop"
 VISION_DETECTIONS = "vision.detections"
 MISSION_COMMAND = "mission.command"
 MISSION_STATE = "mission.state"
+RECORDING_STATE = "recording.state"
 
 
 class Subscription:

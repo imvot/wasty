@@ -37,6 +37,9 @@ else
     echo "    already installed, skipping"
 fi
 
+echo "==> recordings dir /opt/wasty/recordings"
+mkdir -p /opt/wasty/recordings
+
 echo "==> app -> ${APP_DIR} (editable install source)"
 mkdir -p "$APP_DIR"
 # Preserve per-robot overrides; never wipe local.yaml on reinstall/update.
