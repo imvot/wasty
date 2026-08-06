@@ -3,8 +3,10 @@
 #
 #   sudo scripts/install.sh
 #
-# Installs: apt deps, MediaMTX binary, a venv at /opt/wasty/venv,
-# the app at /opt/wasty/app, and the systemd unit.
+# Installs: apt deps, MediaMTX binary, a venv at /opt/wasty/venv with an
+# editable install of the app at /opt/wasty/app, and the systemd unit.
+#
+# After this, day-to-day updates are:  sudo scripts/update.sh
 set -euo pipefail
 
 if [[ $EUID -ne 0 ]]; then
@@ -35,16 +37,16 @@ else
     echo "    already installed, skipping"
 fi
 
-echo "==> app -> ${APP_DIR}"
+echo "==> app -> ${APP_DIR} (editable install source)"
 mkdir -p "$APP_DIR"
+# Preserve per-robot overrides; never wipe local.yaml on reinstall/update.
 rsync -a --delete \
-    --exclude .git --exclude .venv-dev --exclude webui/node_modules \
+    --exclude .git \
+    --exclude .venv \
+    --exclude .venv-dev \
+    --exclude webui/node_modules \
+    --exclude config/local.yaml \
     "$REPO_DIR/" "$APP_DIR/"
-
-echo "==> venv -> ${VENV_DIR} (with system site-packages for picamera2)"
-python3 -m venv --system-site-packages "$VENV_DIR"
-"$VENV_DIR/bin/pip" install --upgrade pip >/dev/null
-"$VENV_DIR/bin/pip" install "$APP_DIR[pi]"
 
 if [[ ! -f "$APP_DIR/webui/dist/index.html" ]]; then
     echo "!! $APP_DIR/webui/dist/index.html missing"
@@ -54,6 +56,12 @@ if [[ ! -f "$APP_DIR/webui/dist/index.html" ]]; then
 fi
 echo "    SPA found at $APP_DIR/webui/dist"
 
+echo "==> venv -> ${VENV_DIR} (system site-packages for picamera2)"
+python3 -m venv --system-site-packages "$VENV_DIR"
+"$VENV_DIR/bin/pip" install --upgrade pip >/dev/null
+# Editable: Python imports from $APP_DIR/src, so update.sh only needs sync + restart.
+"$VENV_DIR/bin/pip" install -e "${APP_DIR}[pi]"
+
 echo "==> systemd unit"
 cp "$APP_DIR/systemd/wasty.service" /etc/systemd/system/wasty.service
 systemctl daemon-reload
@@ -62,3 +70,6 @@ systemctl enable wasty.service
 echo
 echo "Done. Edit ${APP_DIR}/config/local.yaml (hotspot SSID/password, servo trim),"
 echo "then: sudo systemctl start wasty"
+echo
+echo "Later updates from your git checkout:"
+echo "  git pull && sudo scripts/update.sh"

@@ -45,17 +45,18 @@ Key contracts:
 
 ## Install on the Pi
 
+One-time:
+
 ```bash
-git clone <this repo> && cd wasty
-# build the UI first (on any machine with node, copy dist/ over, or build on the Pi)
-cd webui && npm install && npm run build && cd ..
+git clone -b dev https://github.com/imvot/wasty.git
+cd wasty
 sudo scripts/install.sh
+# create /opt/wasty/app/config/local.yaml (SSID/password, servo trim)
 sudo systemctl start wasty
 ```
 
-Per-robot settings (hotspot SSID/password, servo channels/trim, camera
-resolution) go in `config/local.yaml`, which overlays `config/default.yaml`
-and is gitignored:
+Per-robot settings go in `/opt/wasty/app/config/local.yaml` (gitignored, preserved
+across updates), overlaying `config/default.yaml`:
 
 ```yaml
 hotspot:
@@ -66,6 +67,34 @@ drive:
 ```
 
 Connect to the hotspot, open `http://10.42.0.1:8080/`.
+
+### Updating the Pi from `dev` (normal loop)
+
+The Pi install is an **editable** pip install of `/opt/wasty/app`. Python and
+the built SPA load from that tree, so you do **not** reinstall for every code
+change — sync + restart is enough:
+
+```bash
+cd ~/wasty          # your git clone on the Pi
+git pull origin dev
+sudo scripts/update.sh
+```
+
+`update.sh` rsyncs the checkout → `/opt/wasty/app` (keeping `config/local.yaml`),
+reinstalls only if `pyproject.toml` changed, reloads systemd if the unit
+changed, then restarts `wasty`.
+
+From your laptop:
+
+```bash
+ssh wasty@<pi-hostname-or-ip> 'cd ~/wasty && git pull origin dev && sudo scripts/update.sh'
+```
+
+Re-run `sudo scripts/install.sh` only for a broken/fresh machine (apt deps,
+MediaMTX, venv recreate). Day-to-day: `git pull && sudo scripts/update.sh`.
+
+Hardware services (drive/camera) are not live-reloaded in-process — a restart
+is the safe way to pick up changes on a robot.
 
 ## Develop on a laptop (no robot needed)
 
