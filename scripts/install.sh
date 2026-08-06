@@ -46,10 +46,13 @@ python3 -m venv --system-site-packages "$VENV_DIR"
 "$VENV_DIR/bin/pip" install --upgrade pip >/dev/null
 "$VENV_DIR/bin/pip" install "$APP_DIR[pi]"
 
-if [[ ! -d "$APP_DIR/webui/dist" ]]; then
-    echo "!! webui/dist missing — build the UI on your dev machine first"
-    echo "   (cd webui && npm install && npm run build), then re-run install."
+if [[ ! -f "$APP_DIR/webui/dist/index.html" ]]; then
+    echo "!! $APP_DIR/webui/dist/index.html missing"
+    echo "   The SPA should be committed on the 'dev' branch. Try: git pull"
+    echo "   Or build it: (cd webui && npm install && npm run build), then re-run."
+    exit 1
 fi
+echo "    SPA found at $APP_DIR/webui/dist"
 
 echo "==> systemd unit"
 cp "$APP_DIR/systemd/wasty.service" /etc/systemd/system/wasty.service

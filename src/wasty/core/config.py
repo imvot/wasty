@@ -50,6 +50,8 @@ class WebConfig(BaseModel):
     enabled: bool = True
     host: str = "0.0.0.0"
     port: int = 8080
+    # Absolute path to the built SPA. Empty = auto-detect (cwd, install dir, repo).
+    static_dir: str = ""
 
 
 class DriveConfig(BaseModel):

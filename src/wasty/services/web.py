@@ -30,9 +30,6 @@ from ..core import bus as topics
 from ..core.messages import DriveIntent, DriveSource, EStop, MissionCommand
 from ..core.service import Service
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-WEBUI_DIST = REPO_ROOT / "webui" / "dist"
-
 PLACEHOLDER_HTML = """<!doctype html>
 <html><body style="background:#111;color:#eee;font-family:sans-serif;
 display:flex;align-items:center;justify-content:center;height:100vh">
@@ -42,6 +39,29 @@ display:flex;align-items:center;justify-content:center;height:100vh">
 </body></html>"""
 
 
+def resolve_webui_dist(configured: str = "") -> Path | None:
+    """Find the built SPA.
+
+    After `pip install`, this module lives in the venv site-packages, so a path
+    relative to __file__ is wrong. Prefer an explicit config path, then the
+    systemd WorkingDirectory (/opt/wasty/app), then a source-tree checkout.
+    """
+    candidates: list[Path] = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+    candidates.extend(
+        [
+            Path.cwd() / "webui" / "dist",
+            Path("/opt/wasty/app/webui/dist"),
+            Path(__file__).resolve().parents[3] / "webui" / "dist",
+        ]
+    )
+    for path in candidates:
+        if (path / "index.html").is_file():
+            return path
+    return None
+
+
 class WebService(Service):
     name = "web"
     ui_panels = ("status",)
@@ -49,6 +69,7 @@ class WebService(Service):
     def __init__(self, ctx):
         super().__init__(ctx)
         self.cfg = ctx.config.web
+        self.webui_dist = resolve_webui_dist(self.cfg.static_dir)
         self._server: uvicorn.Server | None = None
         self._clients: set[WebSocket] = set()
         self._broadcast_task: asyncio.Task | None = None
@@ -98,9 +119,11 @@ class WebService(Service):
             finally:
                 self._clients.discard(ws)
 
-        if WEBUI_DIST.exists():
+        if self.webui_dist is not None:
             app.mount(
-                "/", StaticFiles(directory=WEBUI_DIST, html=True), name="webui"
+                "/",
+                StaticFiles(directory=self.webui_dist, html=True),
+                name="webui",
             )
         else:
 
@@ -169,6 +192,13 @@ class WebService(Service):
     # ------------------------------------------------------------- lifecycle
 
     async def start(self) -> None:
+        if self.webui_dist is None:
+            self.log.warning(
+                "built SPA not found (checked cwd/webui/dist, "
+                "/opt/wasty/app/webui/dist); serving placeholder"
+            )
+        else:
+            self.log.info("serving SPA from %s", self.webui_dist)
         config = uvicorn.Config(
             self._build_app(),
             host=self.cfg.host,
@@ -200,5 +230,6 @@ class WebService(Service):
         return {
             "port": self.cfg.port,
             "clients": len(self._clients),
-            "spa_built": WEBUI_DIST.exists(),
+            "spa_built": self.webui_dist is not None,
+            "spa_path": str(self.webui_dist) if self.webui_dist else None,
         }

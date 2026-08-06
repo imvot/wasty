@@ -35,6 +35,8 @@ web:
   enabled: true
   host: 0.0.0.0
   port: 8080
+  # Leave empty to auto-detect. Pi install lands at /opt/wasty/app/webui/dist.
+  static_dir: ""
 
 drive:
   enabled: true
