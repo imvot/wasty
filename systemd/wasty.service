@@ -1,0 +1,17 @@
+[Unit]
+Description=Wasty robot service (hotspot, livefeed, drive, autonomy)
+After=NetworkManager.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# install.sh creates this venv with --system-site-packages (picamera2 from apt)
+ExecStart=/opt/wasty/venv/bin/python -m wasty
+WorkingDirectory=/opt/wasty/app
+Restart=on-failure
+RestartSec=3
+# Root needed for nmcli hotspot control and /dev/i2c (ServoKit)
+User=root
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,61 @@
+# Wasty default configuration.
+# Do not put secrets or per-robot tweaks here: create config/local.yaml
+# (gitignored) with only the keys you want to override.
+
+system:
+  mock: false          # true = mock hardware (dev machine), also via `wasty --mock`
+  log_level: INFO
+
+hotspot:
+  enabled: true
+  policy: always-on    # always-on | on-when-no-wifi | manual
+  ssid: Wasty
+  password: change-me-1234
+  interface: wlan1
+  band: a              # "a" = 5GHz, "bg" = 2.4GHz
+  connection_name: wasty-hotspot
+
+mediamtx:
+  enabled: true
+  binary: /usr/local/bin/mediamtx
+  rtsp_port: 8554
+  webrtc_port: 8889
+  stream_name: cam
+
+camera:
+  enabled: true
+  width: 854
+  height: 480
+  fps: 30
+  bitrate: 1000000
+  lores_width: 320     # low-res tap used by the vision pipeline
+  lores_height: 240
+
+web:
+  enabled: true
+  host: 0.0.0.0
+  port: 8080
+
+drive:
+  enabled: true
+  steering_channel: 0
+  motor_channel: 1
+  steering_center: 105.0   # servo degrees
+  steering_left: 145.0     # full-left servo angle (steer = -1)
+  steering_right: 70.0     # full-right servo angle (steer = +1)
+  max_throttle: 0.6
+  throttle_ramp: 2.0       # max throttle change per second
+  manual_timeout: 0.5      # s without a manual command before neutral (deadman)
+  autonomy_timeout: 1.0    # s without an autonomy command before neutral
+  arm_seconds: 2.0         # ESC neutral arming delay at startup
+  loop_hz: 50
+
+autonomy:
+  enabled: true
+  detector: stub           # stub | (future: onnx model names)
+  inference_hz: 5
+  search_throttle: 0.12    # slow spin while searching
+  search_steering: -0.7
+  approach_throttle: 0.2
+  approach_area: 0.25      # normalized bbox area that counts as "reached"
+  collect_seconds: 2.0     # forward push over the trash
